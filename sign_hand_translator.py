@@ -11,15 +11,15 @@ Original file is located at
 
 import matplotlib.pyplot as plt
 import numpy as np
-
+ 
 import os
-
+ 
 import seaborn as sn
 from sklearn.metrics import confusion_matrix
-
+ 
 import tensorflow as tf
 assert tf.__version__.startswith('2')
-
+ 
 from tflite_model_maker import model_spec
 from tflite_model_maker import image_classifier
 from tflite_model_maker.config import ExportFormat
@@ -27,15 +27,15 @@ from tflite_model_maker.config import QuantizationConfig
 from tflite_model_maker.image_classifier import DataLoader
 
 !wget --no-check-certificate -r \
-      "https://drive.google.com/u/0/uc?id=1JZlWO_ekSE2uQn-zTGEofB0NIJ2SxkCE&export=download" \
-      -O signhand_datasets.zip
+      "https://drive.google.com/u/0/uc?id=1J45-wxBwrBCEHsJzsmuxCnzHVvoDjlr2&export=download" \
+      -O asl_dataset.zip
 
 ds_path = "Datasets"
 
 import os, zipfile
-
-
-zip_archive = "signhand_datasets.zip"
+ 
+ 
+zip_archive = "asl_dataset.zip"
 zip_ref = zipfile.ZipFile(zip_archive, "r")
 zip_ref.extractall(ds_path)
 zip_ref.close()
@@ -54,7 +54,7 @@ for i, (image, label) in enumerate(
   plt.grid(False)
   plt.imshow(image.numpy(), cmap=plt.cm.gray)
   plt.xlabel(datasets.index_to_label[label.numpy()])
-
+ 
 plt.show()
 
 efficientnet_model = model_spec.get("efficientnet_lite1")
@@ -70,7 +70,7 @@ model.summary()
 
 # Commented out IPython magic to ensure Python compatibility.
 # %matplotlib inline
-
+ 
 #Loss graph
 plt.figure(figsize=(8, 6))
 plt.plot(model.history.history["loss"])
@@ -100,7 +100,7 @@ def get_label_color(predict_label, actual_label):
     return "black"
   else:
     return "red"
-
+ 
 plt.figure(figsize=(20, 20))
 predicts = model.predict_top_k(testing)
 for i, (image, label) in enumerate(
@@ -110,34 +110,34 @@ for i, (image, label) in enumerate(
   plt.yticks([])
   plt.grid(False)
   plt.imshow(image.numpy(), cmap="Greys")
-
+ 
   predict_label = predicts[i][0][0]
   color = get_label_color(predict_label,
                           testing.index_to_label[label.numpy()])
   ax.xaxis.label.set_color(color)
   plt.xlabel("Predicted:\n{}".format(predict_label))
-
+ 
 plt.show()
 
 labels = os.listdir(os.path.join(ds_path))
 labels.sort()
-
+ 
 label_dicts = {}
-
+ 
 for i in range(len(labels)):
   label_dicts[labels[i]] = i
-
+ 
 predicts = model.predict_top_k(testing)
 predict_labels = [ label_dicts[predicts[i][0][0]]
                   for i, (image, label) in enumerate(testing.gen_dataset().unbatch()) ]
-
+ 
 actual_labels = [ label.numpy()
                   for i, (image, label) in enumerate(testing.gen_dataset().unbatch()) ]
-
+ 
 plt.figure(figsize=(15, 10))
 signhand_cm = confusion_matrix(y_true=actual_labels, y_pred=predict_labels)
 signhand_cm = signhand_cm / signhand_cm.sum(axis=1) # To display conf. matrix in percetage %
-
+ 
 sn.heatmap(signhand_cm, annot=True, cmap="Greens")
 
 model.export(export_dir=".")
